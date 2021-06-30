@@ -1,0 +1,7 @@
+resources:
+  - ../../base/thanos-receive-controller/
+  - thanos-receive-default/
+  - thanos-receive-staging/
+  - thanos-object-store.yaml # TODO
+  #- thanos-tracing-configs.yaml
+  - thanos-receive-controller-configmap.yaml

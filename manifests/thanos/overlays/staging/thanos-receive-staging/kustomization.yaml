@@ -1,0 +1,20 @@
+resources:
+  - ../../../base/thanos-receive/
+
+nameSuffix: -staging
+commonLabels:
+  controller.receive.thanos.io/hashring: staging
+
+patchesJson6902:
+  - target:
+      group: "apps"
+      version: "v1"
+      kind: "StatefulSet"
+      name: "thanos-receive"
+      namespace: "thanos"
+    patch: |-
+      - { op: "replace", path: "/spec/volumeClaimTemplates/0/metadata/name", value: "thanos-receive-staging" }
+      - { op: "replace", path: "/spec/template/spec/containers/1/volumeMounts/0/name", value: "thanos-receive-staging" }
+      - { op: "replace", path: "/spec/template/spec/containers/1/args/4", value: "--label=hashring=\"staging\"" }
+      - { op: "replace", path: "/spec/template/spec/containers/1/args/5", value: "--receive.local-endpoint=$(NAME).thanos-receive-staging.$(NAMESPACE).svc:10901" }
+      #- { op: "replace", path: "/spec/template/spec/volumes/1/secret/secretName", value: "thanos-receive-staging-tracing-config" }

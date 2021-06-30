@@ -1,0 +1,6 @@
+resources:
+  - ../../../base/thanos-receive/
+
+nameSuffix: -default
+commonLabels:
+  controller.receive.thanos.io/hashring: default

@@ -1,0 +1,109 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: thanos-receive-controller
+  namespace: thanos
+  labels:
+    app: thanos-receive-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: thanos-receive-controller
+  namespace: thanos
+  labels:
+    app: thanos-receive-controller
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - list
+      - watch
+      - get
+      - create
+      - update
+  - apiGroups:
+      - apps
+    resources:
+      - statefulsets
+    verbs:
+      - list
+      - watch
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: thanos-receive-controller
+  namespace: thanos
+  labels:
+    app: thanos-receive-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: thanos-receive-controller
+subjects:
+  - kind: ServiceAccount
+    name: thanos-receive-controller
+    namespace: thanos
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: thanos-receive-controller
+  name: thanos-receive-controller
+  namespace: thanos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-receive-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: "thanos"
+        app.kubernetes.io/instance: "thanos-singleton"
+        app.kubernetes.io/name: "thanos-receive-controller"
+        app: thanos-receive-controller
+    spec:
+      containers:
+        - args:
+            - --configmap-name=thanos-receive-base
+            - --configmap-generated-name=thanos-receive-generated
+            - --file-name=hashrings.json
+            - --namespace=$(NAMESPACE)
+            - --cluster-domain=
+          env:
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: todo # TODO build image
+          name: thanos-receive-controller
+          #resources:
+          #  requests:
+          #    cpu: "0.1"
+          #    memory: "128.0Mi"
+          #  limits:
+          #    cpu: "0.5"
+          #    memory: "256.0Mi"
+          ports:
+            - containerPort: 8080
+              name: http
+      serviceAccount: thanos-receive-controller
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: thanos
+  name: thanos-receive-controller
+spec:
+  type: ClusterIP
+  selector:
+    app: thanos-receive-controller
+  ports:
+  - port: 8080
+    targetPort: 8080

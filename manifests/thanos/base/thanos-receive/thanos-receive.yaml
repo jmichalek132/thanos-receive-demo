@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: thanos-receive
+    controller.receive.thanos.io: thanos-receive-controller
+  name: thanos-receive
+  namespace: thanos
+spec:
+  replicas: 6
+  volumeClaimTemplates:
+    - metadata:
+        name: thanos-receive-default
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "5.0Gi"
+  selector:
+    matchLabels:
+      app: thanos-receive
+      controller.receive.thanos.io: thanos-receive-controller
+  serviceName: thanos-receive
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: "thanos"
+        app.kubernetes.io/instance: "thanos-singleton"
+        app.kubernetes.io/name: "thanos-receive"
+        app: thanos-receive
+        controller.receive.thanos.io: thanos-receive-controller
+    spec:
+      containers:
+        - args:
+            - receive
+            - --receive.replication-factor=3
+            - --tsdb.path=/var/thanos/receive
+            - --label=receive_replica="$(NAME)"
+            - --label=hashring="default"
+            - --receive.local-endpoint=$(NAME).thanos-receive-default.$(NAMESPACE).svc:10901
+            - --tsdb.retention=2h
+            - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
+            - --log.level=info
+            #- --tracing.config-file=/tracing/thanos-tracing.yaml
+            - --objstore.config-file=/object-store/thanos-receive-object-store.yaml
+          env:
+            - name: NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          #resources:
+          #  requests:
+          #    cpu: "1.0"
+          #    memory: "4.0Gi"
+          #  limits:
+          #    memory: "8.0Gi"
+          #    cpu: "2.0"
+          image: quay.io/thanos/thanos:v0.21.1
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-receive
+          ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10902
+              name: http
+            - containerPort: 19291
+              name: remote-write
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /var/thanos/receive
+              name: thanos-receive-default
+              readOnly: false
+            - mountPath: /var/lib/thanos-receive
+              name: hashring-config
+            #- name: "thanos-receive-tracing-config"
+            #  mountPath: "/tracing"
+            - name: "thanos-object-store-config"
+              mountPath: "/object-store"
+              readOnly: true
+      terminationGracePeriodSeconds: 900
+      volumes:
+        - configMap:
+            name: thanos-receive-generated
+          name: hashring-config
+        #- name: "thanos-receive-tracing-config"
+        #  secret:
+        #    secretName: "thanos-receive-default-tracing-config"
+        - name: "thanos-object-store-config"
+          secret:
+            secretName: "thanos-receive-object-store-config"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: thanos-receive
+  name: thanos-receive
+  namespace: thanos
+spec:
+  clusterIP: None
+  ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    - name: remote-write
+      port: 19291
+      targetPort: 19291
+  selector:
+    app: thanos-receive
+    controller.receive.thanos.io: thanos-receive-controller
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: thanos-receive
+  namespace: thanos
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: thanos-receive
