@@ -43,7 +43,7 @@ spec:
             - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
             - --log.level=info
             #- --tracing.config-file=/tracing/thanos-tracing.yaml
-            - --objstore.config-file=/object-store/thanos-receive-object-store.yaml
+            #- --objstore.config-file=/object-store/thanos-receive-object-store.yaml
           env:
             - name: NAME
               valueFrom:
@@ -92,9 +92,9 @@ spec:
               name: hashring-config
             #- name: "thanos-receive-tracing-config"
             #  mountPath: "/tracing"
-            - name: "thanos-object-store-config"
-              mountPath: "/object-store"
-              readOnly: true
+            #- name: "thanos-object-store-config"
+            #  mountPath: "/object-store"
+            #  readOnly: true
       terminationGracePeriodSeconds: 900
       volumes:
         - configMap:
@@ -103,9 +103,9 @@ spec:
         #- name: "thanos-receive-tracing-config"
         #  secret:
         #    secretName: "thanos-receive-default-tracing-config"
-        - name: "thanos-object-store-config"
-          secret:
-            secretName: "thanos-receive-object-store-config"
+        #- name: "thanos-object-store-config"
+        #  secret:
+        #    secretName: "thanos-receive-object-store-config"
 ---
 apiVersion: v1
 kind: Service
