@@ -1,5 +1,8 @@
 scrape_configs:
   - job_name: "kubernetes-service-endpoints"
+    scrape_interval: 15s
+
+    # TODO add job and pod relabaling
 
     kubernetes_sd_configs:
       - role: endpoints

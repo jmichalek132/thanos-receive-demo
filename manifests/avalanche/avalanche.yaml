@@ -29,12 +29,12 @@ spec:
         - name: pg-avalanche
           image: quay.io/freshtracks.io/avalanche:latest
           args:
-            - "--metric-count=100"
-            - "--series-count=50"
+            - "--metric-count=150"
+            - "--series-count=100"
             - "--port=9001"
             - "--remote-url=http://thanos-receive-default.thanos.svc:19291/api/v1/receive"
             - "--remote-requests-count=1000000"
-            #- "--remote-tenant=test1"
+            - "--remote-tenant=test1"
           ports:
             - containerPort: 9001
 ---
