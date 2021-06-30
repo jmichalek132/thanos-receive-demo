@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: monitoring
+  name: prometheus
+spec:
+  serviceName: prometheus
+  selector:
+    matchLabels:
+      app: prometheus
+  replicas: 1
+  volumeClaimTemplates:
+    - metadata:
+        name: prometheus
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: "20.0Gi"
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          args:
+            - --storage.tsdb.path=/data/
+            - --config.file=/etc/prometheus/config.yaml
+          image: prom/prometheus:v2.28.0
+          ports:
+            - containerPort: 9090
+              name: default
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: prometheus
+              mountPath: /data
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: monitoring
+  name: prometheus
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090

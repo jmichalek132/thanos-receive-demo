@@ -1,0 +1,12 @@
+resources:
+  - namespace.yaml
+  - prometheus.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - files:
+      - config.yaml
+    name: prometheus
+    namespace: monitoring

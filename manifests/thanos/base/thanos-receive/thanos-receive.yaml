@@ -41,7 +41,8 @@ spec:
             - --receive.local-endpoint=$(NAME).thanos-receive-default.$(NAMESPACE).svc:10901
             - --tsdb.retention=2h
             - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
-            - --log.level=info
+            - --log.level=debug
+            - --receive.replica-header="X-Scope-OrgID"
             #- --tracing.config-file=/tracing/thanos-tracing.yaml
             #- --objstore.config-file=/object-store/thanos-receive-object-store.yaml
           env:
