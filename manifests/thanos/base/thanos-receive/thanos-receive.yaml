@@ -39,10 +39,10 @@ spec:
             - --label=receive_replica="$(NAME)"
             - --label=hashring="default"
             - --receive.local-endpoint=$(NAME).thanos-receive-default.$(NAMESPACE).svc:10901
-            - --tsdb.retention=2h
+            - --tsdb.retention=8h
             - --receive.hashrings-file=/var/lib/thanos-receive/hashrings.json
             - --log.level=debug
-            - --receive.replica-header="X-Scope-OrgID"
+            - --receive.replica-header="THANOS-TENANT"
             #- --tracing.config-file=/tracing/thanos-tracing.yaml
             #- --objstore.config-file=/object-store/thanos-receive-object-store.yaml
           env:

@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: thanos-query
+    controller.receive.thanos.io: thanos-query-controller
+  name: thanos-query
+  namespace: thanos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+      controller.receive.thanos.io: thanos-query-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: "thanos"
+        app.kubernetes.io/instance: "thanos-singleton"
+        app.kubernetes.io/name: "thanos-query"
+        app: thanos-query
+        controller.receive.thanos.io: thanos-query-controller
+    spec:
+      containers:
+        - args:
+            - query
+            - --query.replica-label=receive_replica
+            - --log.level=debug
+            - --store=dnssrv+thanos-receive-default:10901
+            - --store=dnssrv+thanos-receive-staging:10901
+            #- --tracing.config-file=/tracing/thanos-tracing.yaml
+            #- --objstore.config-file=/object-store/thanos-query-object-store.yaml
+          #resources:
+          #  requests:
+          #    cpu: "1.0"
+          #    memory: "4.0Gi"
+          #  limits:
+          #    memory: "8.0Gi"
+          #    cpu: "2.0"
+          image: quay.io/thanos/thanos:v0.21.1
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-query
+          ports:
+            - containerPort: 10902
+              name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          #volumeMounts:
+            #- name: "thanos-query-tracing-config"
+            #  mountPath: "/tracing"
+            #- name: "thanos-object-store-config"
+            #  mountPath: "/object-store"
+            #  readOnly: true
+      #volumes:
+        #- name: "thanos-query-tracing-config"
+        #  secret:
+        #    secretName: "thanos-query-default-tracing-config"
+        #- name: "thanos-object-store-config"
+        #  secret:
+        #    secretName: "thanos-query-object-store-config"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: thanos-query
+  name: thanos-query
+  namespace: thanos
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: 10902
+      targetPort: 10902
+  selector:
+    app: thanos-query
+    controller.receive.thanos.io: thanos-query-controller

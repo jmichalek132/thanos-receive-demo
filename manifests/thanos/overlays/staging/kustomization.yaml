@@ -1,5 +1,6 @@
 resources:
   - ../../base/thanos-receive-controller/
+  - ../../base/thanos
   - thanos-receive-default/
   - thanos-receive-staging/
   #- thanos-object-store.yaml # TODO

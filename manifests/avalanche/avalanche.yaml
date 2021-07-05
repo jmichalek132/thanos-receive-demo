@@ -3,57 +3,102 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: avalanche
-spec:
-  finalizers:
-    - kubernetes
 ---
 #create deployment avalanche
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: avalanche
+  name: avalanche-test1
   namespace: avalanche
   labels:
-    name: avalanche
+    name: avalanche-test1
 spec:
   selector:
     matchLabels:
-      app: avalanche
+      app: avalanche-test1
   replicas: 1 # tells deployment to run 1 pods matching the template
   template:
     metadata:
       labels:
-        app: avalanche
+        app: avalanche-test1
     spec:
       containers:
         - name: pg-avalanche
-          image: quay.io/freshtracks.io/avalanche:latest
+          image: jmichalek/avalanche:190b1b7f68cfa7b776137ef4fc803c39a3b14edf
           args:
-            - "--metric-count=150"
-            - "--series-count=100"
+            - "--metric-count=100"
+            - "--series-count=50"
             - "--port=9001"
             - "--remote-url=http://thanos-receive-default.thanos.svc:19291/api/v1/receive"
             - "--remote-requests-count=1000000"
             - "--remote-tenant=test1"
+            - "--const-label=env=test1"
+            - "--remote-tenant-header-name=THANOS-TENANT"
           ports:
             - containerPort: 9001
 ---
-#create service avalanche-svc
-apiVersion: v1
-kind: Service
+#create deployment avalanche
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: avalanche-svc
+  name: avalanche-test2
   namespace: avalanche
   labels:
-    app: avalanche
+    name: avalanche-test2
 spec:
-  ports:
-    # the port that this service should serve on
-    - port: 9001
-      targetPort: 9001
-      name: http-avalanche
-  type: ClusterIP
-  clusterIP: None
-  # label keys and values that must match in order to receive traffic for this service
   selector:
-    app: avalanche
+    matchLabels:
+      app: avalanche-test2
+  replicas: 1 # tells deployment to run 1 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: avalanche-test2
+    spec:
+      containers:
+        - name: pg-avalanche
+          image: jmichalek/avalanche:190b1b7f68cfa7b776137ef4fc803c39a3b14edf
+          args:
+            - "--metric-count=100"
+            - "--series-count=50"
+            - "--port=9001"
+            - "--remote-url=http://thanos-receive-default.thanos.svc:19291/api/v1/receive"
+            - "--remote-requests-count=1000000"
+            - "--remote-tenant=test2"
+            - "--const-label=env=test2"
+            - "--remote-tenant-header-name=THANOS-TENANT"
+          ports:
+            - containerPort: 9001
+---
+#create deployment avalanche
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: avalanche-test3
+  namespace: avalanche
+  labels:
+    name: avalanche-test3
+spec:
+  selector:
+    matchLabels:
+      app: avalanche-test3
+  replicas: 1 # tells deployment to run 1 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: avalanche-test3
+    spec:
+      containers:
+        - name: pg-avalanche
+          image: jmichalek/avalanche:190b1b7f68cfa7b776137ef4fc803c39a3b14edf
+          args:
+            - "--metric-count=100"
+            - "--series-count=50"
+            - "--port=9001"
+            - "--remote-url=http://thanos-receive-default.thanos.svc:19291/api/v1/receive"
+            - "--remote-requests-count=1000000"
+            - "--remote-tenant=test3"
+            - "--const-label=env=test3"
+            - "--remote-tenant-header-name=THANOS-TENANT"
+          ports:
+            - containerPort: 9001
